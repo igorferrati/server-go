@@ -33,6 +33,7 @@ func BuscaProdutos() []Produto {
 			panic(err.Error())
 		}
 
+		p.Id = id
 		p.Nome = nome
 		p.Descricao = descricao
 		p.Preco = preco
@@ -43,4 +44,61 @@ func BuscaProdutos() []Produto {
 	defer db.Close()
 
 	return produtos
+}
+
+func CriaNovoProduto(nome, descricao string, preco float64, quantindade int) {
+	db := db.ConnPostgresDb()
+
+	insertProduct, err := db.Prepare("insert into produtos(nome, descricao, preco, quantidade) values($1, $2, $3, $4)")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	insertProduct.Exec(nome, descricao, preco, quantindade)
+
+	defer db.Close()
+}
+
+func DeleteProduct(id string) {
+	db := db.ConnPostgresDb()
+
+	delProduct, err := db.Prepare("delete from produtos where id=$1")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	delProduct.Exec(id)
+
+	defer db.Close()
+
+}
+
+func EditProduct(id string) Produto {
+	db := db.ConnPostgresDb()
+
+	produto, err := db.Query("select * from produtos where id=$1", id)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	produtoAtualizar := Produto{}
+
+	for produto.Next() {
+		var id, quantidade int
+		var nome, descricao string
+		var preco float64
+
+		err = produto.Scan(&id, &nome, &descricao, &preco, &quantidade)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		produtoAtualizar.Nome = nome
+		produtoAtualizar.Descricao = descricao
+		produtoAtualizar.Preco = preco
+		produtoAtualizar.Quantidade = quantidade
+	}
+
+	defer db.Close()
+	return produtoAtualizar
 }
