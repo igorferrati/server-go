@@ -15,7 +15,7 @@ type Produto struct {
 func BuscaProdutos() []Produto {
 	db := db.ConnPostgresDb()
 
-	selectProdutos, err := db.Query("Select * from produtos")
+	selectProdutos, err := db.Query("Select * from produtos order by id asc")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -93,6 +93,7 @@ func EditProduct(id string) Produto {
 			panic(err.Error())
 		}
 
+		produtoAtualizar.Id = id
 		produtoAtualizar.Nome = nome
 		produtoAtualizar.Descricao = descricao
 		produtoAtualizar.Preco = preco
@@ -101,4 +102,16 @@ func EditProduct(id string) Produto {
 
 	defer db.Close()
 	return produtoAtualizar
+}
+
+func AtualizarProduto(id int, nome, descricao string, preco float64, quantidade int) {
+	db := db.ConnPostgresDb()
+
+	atualizaProduto, err := db.Prepare("update produtos set nome=$1, descricao=$2, preco=$3, quantidade=$4 where id=$5")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	atualizaProduto.Exec(nome, descricao, preco, quantidade, id)
+	defer db.Close()
 }
